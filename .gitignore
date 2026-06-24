@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Swift / SPM
+.build/
+.swiftpm/
+*.xcodeproj/xcuserdata/
+DerivedData/
+
+# Build output
+koe.app/
+*.dmg
+
+# Local secrets / config
+.env
+*.local
