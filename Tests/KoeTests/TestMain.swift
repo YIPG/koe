@@ -7,6 +7,7 @@ struct TestMain {
         scaffoldTests()
         keychainStoreTests()
         preferencesTests()
+        transcriptionServiceTests()
         T.summary()
     }
 }
