@@ -8,6 +8,7 @@ struct TestMain {
         keychainStoreTests()
         preferencesTests()
         transcriptionServiceTests()
+        await dictationCoordinatorTests()
         T.summary()
     }
 }
