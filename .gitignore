@@ -14,3 +14,6 @@ koe.app/
 # Local secrets / config
 .env
 *.local
+
+# koe generated Azure config (secrets)
+.koe.env
