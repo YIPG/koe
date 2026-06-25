@@ -5,6 +5,7 @@ struct TestMain {
     @MainActor
     static func main() async {
         scaffoldTests()
+        audioLevelTests()
         keychainStoreTests()
         preferencesTests()
         transcriptionServiceTests()

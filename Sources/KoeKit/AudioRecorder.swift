@@ -18,6 +18,7 @@ public final class AudioRecorder: NSObject, AudioRecording {
             AVLinearPCMIsBigEndianKey: false,
         ]
         let rec = try AVAudioRecorder(url: url, settings: settings)
+        rec.isMeteringEnabled = true
         guard rec.record() else { throw NSError(domain: "koe.audio", code: 1) }
         recorder = rec
         currentURL = url
@@ -28,5 +29,11 @@ public final class AudioRecorder: NSObject, AudioRecording {
         recorder = nil
         defer { currentURL = nil }
         return currentURL
+    }
+
+    public func meterLevel() -> Float {
+        guard let recorder else { return 0 }
+        recorder.updateMeters()
+        return normalizedPower(recorder.averagePower(forChannel: 0))
     }
 }
