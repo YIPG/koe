@@ -8,6 +8,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private let hotkey = HotkeyManager()
     private let indicator = RecordingIndicator()
     private let textInserter = TextInserter()
+    private let audioRecorder = AudioRecorder()
     private lazy var prefsWindow = PreferencesWindow(preferences: preferences)
     private var coordinator: DictationCoordinator?
 
@@ -17,7 +18,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         MainMenu.install()  // enables ⌘C/⌘V/⌘A in the Preferences window
 
         let coordinator = DictationCoordinator(
-            recorder: AudioRecorder(),
+            recorder: audioRecorder,
             transcriber: PreferencesTranscriptionService(configProvider: { [preferences] in
                 guard preferences.isConfigured else { return nil }
                 return AzureConfig(
@@ -36,8 +37,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         coordinator.onStateChange = { [weak self] state in
             self?.statusItem.render(state: state)
             switch state {
-            case .recording:    self?.indicator.show("● Recording…")
-            case .transcribing: self?.indicator.show("Transcribing…")
+            case .recording:    self?.indicator.showRecording(level: { [weak self] in self?.audioRecorder.meterLevel() ?? 0 })
+            case .transcribing: self?.indicator.showTranscribing()
             case .idle:         self?.indicator.hide()
             }
         }
