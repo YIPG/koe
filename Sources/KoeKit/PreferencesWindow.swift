@@ -36,6 +36,9 @@ public final class PreferencesWindow: NSObject, NSTextFieldDelegate {
         let win = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 460, height: 260),
             styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        // We cache and reuse this window, so AppKit must NOT release it on close —
+        // otherwise reopening messages a freed object (intermittent crash).
+        win.isReleasedWhenClosed = false
         win.title = "koe Preferences"
         let content = win.contentView!
 
