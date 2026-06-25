@@ -7,6 +7,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private let preferences = Preferences()
     private let hotkey = HotkeyManager()
     private let indicator = RecordingIndicator()
+    private let textInserter = TextInserter()
     private lazy var prefsWindow = PreferencesWindow(preferences: preferences)
     private var coordinator: DictationCoordinator?
 
@@ -25,7 +26,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                     apiVersion: preferences.apiVersion,
                     apiKey: preferences.apiKey ?? "")
             }),
-            inserter: TextInserter(),
+            inserter: textInserter,
             language: { [preferences] in
                 let lang = preferences.language
                 return lang == "auto" ? nil : lang
@@ -43,6 +44,13 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         coordinator.onError = { [weak self] error in
             self?.indicator.hide()
             self?.notify("koe error", String(describing: error))
+        }
+
+        textInserter.onAccessibilityMissing = { [weak self] in
+            self?.notify("koe needs Accessibility",
+                         "The transcription is on your clipboard — press ⌘V to paste it. "
+                         + "To auto-insert, enable koe in System Settings → Privacy & Security → Accessibility.")
+            TextInserter.promptAccessibilityPermission()
         }
 
         statusItem.onToggle = { [weak self] in self?.handleToggle() }

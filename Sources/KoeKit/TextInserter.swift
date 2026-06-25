@@ -2,6 +2,10 @@ import AppKit
 import ApplicationServices
 
 public final class TextInserter: TextInserting {
+    /// Called when text could not be auto-inserted because Accessibility is not
+    /// granted. The transcription is left on the clipboard for manual paste.
+    public var onAccessibilityMissing: (() -> Void)?
+
     public init() {}
 
     public static func hasAccessibilityPermission() -> Bool {
@@ -19,6 +23,13 @@ public final class TextInserter: TextInserting {
 
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
+
+        guard Self.hasAccessibilityPermission() else {
+            // Can't synthesize ⌘V without Accessibility. Leave the text on the
+            // clipboard (don't restore) so the user can paste it manually.
+            onAccessibilityMissing?()
+            return
+        }
 
         pasteCmdV()
 
