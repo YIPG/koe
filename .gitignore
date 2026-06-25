@@ -17,3 +17,6 @@ koe.app/
 
 # koe generated Azure config (secrets)
 .koe.env
+
+# Internal design docs (kept local, not published)
+docs/superpowers/
