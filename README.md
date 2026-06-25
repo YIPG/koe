@@ -16,10 +16,17 @@ minimal, hotkey-driven, out of your way.
 ## Build & run
 
 ```bash
-make run      # build koe.app and launch it (menu-bar mic icon)
-make app      # just build koe.app
-make test     # run the logic test suite (swift run KoeTests)
+make signing-cert  # once: create a stable self-signed signing identity
+make run           # build koe.app and launch it (menu-bar mic icon)
+make app           # just build koe.app
+make test          # run the logic test suite (swift run KoeTests)
 ```
+
+Run `make signing-cert` once before your first build. It creates a local
+self-signed code-signing identity (`koe-dev`) so the app's signature stays
+constant across rebuilds — without it, ad-hoc signing changes the signature
+every build and macOS resets the Microphone/Accessibility permissions and
+re-prompts the Keychain each time.
 
 `koe` is a menu-bar agent (no Dock icon). It ships **no API key**; each user
 brings their own Azure key.
