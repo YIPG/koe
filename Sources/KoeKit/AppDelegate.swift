@@ -17,7 +17,14 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let coordinator = DictationCoordinator(
             recorder: AudioRecorder(),
-            transcriber: makeTranscriber(),
+            transcriber: PreferencesTranscriptionService(configProvider: { [preferences] in
+                guard preferences.isConfigured else { return nil }
+                return AzureConfig(
+                    endpoint: preferences.endpoint,
+                    deployment: preferences.deployment,
+                    apiVersion: preferences.apiVersion,
+                    apiKey: preferences.apiKey ?? "")
+            }),
             inserter: TextInserter(),
             language: { [preferences] in
                 let lang = preferences.language
@@ -57,14 +64,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         coordinator?.toggle()
-    }
-
-    private func makeTranscriber() -> TranscriptionService {
-        AzureOpenAITranscriptionService(config: AzureConfig(
-            endpoint: preferences.endpoint,
-            deployment: preferences.deployment,
-            apiVersion: preferences.apiVersion,
-            apiKey: preferences.apiKey ?? ""))
     }
 
     private func notify(_ title: String, _ body: String) {

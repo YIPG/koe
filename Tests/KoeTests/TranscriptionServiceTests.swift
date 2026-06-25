@@ -44,3 +44,18 @@ func transcriptionServiceTests() {
     let body2 = String(data: req2.httpBody ?? Data(), encoding: .utf8) ?? ""
     T.isFalse(body2.contains("name=\"language\""), "language omitted when nil")
 }
+
+func preferencesTranscriptionServiceTests() async {
+    // nil config (not yet configured) -> notConfigured, no network
+    let svc = PreferencesTranscriptionService(configProvider: { nil })
+    let audio = makeAudioFile()
+    defer { try? FileManager.default.removeItem(at: audio) }
+    do {
+        _ = try await svc.transcribe(audioURL: audio, language: "ja")
+        T.check(false, "expected notConfigured to throw")
+    } catch let e as TranscriptionError {
+        T.eq(e, .notConfigured, "nil config -> notConfigured")
+    } catch {
+        T.check(false, "wrong error type: \(error)")
+    }
+}

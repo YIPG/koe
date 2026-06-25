@@ -24,6 +24,25 @@ public enum TranscriptionError: Error, Equatable {
     case badResponse
 }
 
+/// Reads the Azure config fresh on every call (via `configProvider`) so changes
+/// made in Preferences take effect immediately — no app restart needed. Returns
+/// `.notConfigured` when the provider yields nil.
+public struct PreferencesTranscriptionService: TranscriptionService {
+    let configProvider: () -> AzureConfig?
+    let session: URLSession
+
+    public init(configProvider: @escaping () -> AzureConfig?, session: URLSession = .shared) {
+        self.configProvider = configProvider
+        self.session = session
+    }
+
+    public func transcribe(audioURL: URL, language: String?) async throws -> String {
+        guard let config = configProvider() else { throw TranscriptionError.notConfigured }
+        let service = AzureOpenAITranscriptionService(config: config, session: session)
+        return try await service.transcribe(audioURL: audioURL, language: language)
+    }
+}
+
 public struct AzureOpenAITranscriptionService: TranscriptionService {
     let config: AzureConfig
     let session: URLSession
