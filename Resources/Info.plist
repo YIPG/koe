@@ -14,5 +14,6 @@
     <key>NSPrincipalClass</key><string>NSApplication</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>koe records your voice so it can transcribe it into text.</string>
+    <key>CFBundleIconFile</key><string>koe</string>
 </dict>
 </plist>

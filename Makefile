@@ -19,6 +19,7 @@ app: build
 	mkdir -p $(APP)/Contents/MacOS $(APP)/Contents/Resources
 	cp $(BIN) $(APP)/Contents/MacOS/koe
 	cp Resources/Info.plist $(APP)/Contents/Info.plist
+	cp Resources/koe.icns $(APP)/Contents/Resources/koe.icns
 	@if security find-identity -p codesigning | grep -q '"$(SIGN_IDENTITY)"'; then \
 		codesign --force --sign "$(SIGN_IDENTITY)" $(APP) && \
 		echo "Built $(APP) (signed: $(SIGN_IDENTITY) — permissions persist across rebuilds)"; \
