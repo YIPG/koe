@@ -1,9 +1,12 @@
 import AppKit
+import KeyboardShortcuts
 
 public final class StatusItemController {
     private let item: NSStatusItem
     private let menu = NSMenu()
+    private let statusHeader = NSMenuItem(title: "Ready", action: nil, keyEquivalent: "")
     private let toggleItem = NSMenuItem(title: "Start Dictation", action: nil, keyEquivalent: "")
+    private let spinner = NSProgressIndicator()
 
     public var onToggle: (() -> Void)?
     public var onOpenPreferences: (() -> Void)?
@@ -11,10 +14,18 @@ public final class StatusItemController {
 
     public init() {
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = NSImage(systemSymbolName: "mic", accessibilityDescription: "koe")
+
+        spinner.style = .spinning
+        spinner.controlSize = .small
+        spinner.isDisplayedWhenStopped = false
+
+        statusHeader.isEnabled = false
+        menu.addItem(statusHeader)
+        menu.addItem(.separator())
 
         toggleItem.target = self
         toggleItem.action = #selector(toggleTapped)
+        toggleItem.setShortcut(for: .toggleDictation)   // shows the current hotkey, kept in sync
         menu.addItem(toggleItem)
         menu.addItem(.separator())
 
@@ -31,13 +42,52 @@ public final class StatusItemController {
     }
 
     public func render(state: DictationState) {
-        let symbol: String
         switch state {
-        case .idle:         symbol = "mic"; toggleItem.title = "Start Dictation"
-        case .recording:    symbol = "mic.fill"; toggleItem.title = "Stop & Transcribe"
-        case .transcribing: symbol = "ellipsis.circle"; toggleItem.title = "Transcribing…"
+        case .idle:
+            stopSpinner()
+            setSymbol("mic", color: nil)
+            statusHeader.title = "Ready"
+            toggleItem.title = "Start Dictation"
+        case .recording:
+            stopSpinner()
+            setSymbol("mic.fill", color: .systemRed)
+            statusHeader.title = "Recording…"
+            toggleItem.title = "Stop & Transcribe"
+        case .transcribing:
+            statusHeader.title = "Transcribing…"
+            toggleItem.title = "Transcribing…"
+            startSpinner()
         }
-        item.button?.image = NSImage(systemSymbolName: symbol, accessibilityDescription: "koe")
+    }
+
+    private func setSymbol(_ name: String, color: NSColor?) {
+        guard let button = item.button else { return }
+        if let color {
+            let conf = NSImage.SymbolConfiguration(paletteColors: [color])
+            let image = NSImage(systemSymbolName: name, accessibilityDescription: "koe")?
+                .withSymbolConfiguration(conf)
+            image?.isTemplate = false
+            button.image = image
+        } else {
+            let image = NSImage(systemSymbolName: name, accessibilityDescription: "koe")
+            image?.isTemplate = true
+            button.image = image
+        }
+    }
+
+    private func startSpinner() {
+        guard let button = item.button else { return }
+        button.image = nil
+        if spinner.superview == nil {
+            spinner.frame = NSRect(x: 4, y: 2, width: 16, height: 16)
+            button.addSubview(spinner)
+        }
+        spinner.startAnimation(nil)
+    }
+
+    private func stopSpinner() {
+        spinner.stopAnimation(nil)
+        spinner.removeFromSuperview()
     }
 
     @objc private func toggleTapped() { onToggle?() }
