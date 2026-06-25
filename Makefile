@@ -1,8 +1,9 @@
 APP := koe.app
 BIN := .build/release/koe
 SIGN_IDENTITY ?= koe-dev
+INSTALL_DIR ?= /Applications
 
-.PHONY: build test app run clean signing-cert
+.PHONY: build test app run install clean signing-cert
 
 build:
 	swift build -c release
@@ -28,6 +29,13 @@ app: build
 
 run: app
 	open $(APP)
+
+# Install into /Applications so Spotlight / Raycast / Launchpad can launch it
+# like any app. Override the location with: make install INSTALL_DIR=~/Applications
+install: app
+	rm -rf "$(INSTALL_DIR)/koe.app"
+	cp -R $(APP) "$(INSTALL_DIR)/koe.app"
+	@echo "Installed → $(INSTALL_DIR)/koe.app (launch via Spotlight / Raycast)"
 
 clean:
 	rm -rf .build $(APP)

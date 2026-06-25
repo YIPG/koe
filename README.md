@@ -99,7 +99,11 @@ engine sits behind a `TranscriptionService` protocol, so it can be swapped
 make test      # run the logic test suite (swift run KoeTests)
 make app       # build koe.app
 make run       # build + launch
+make install   # copy to /Applications so Spotlight / Raycast can launch it
 ```
+
+After `make install`, launch **koe** from Spotlight, Raycast, or Launchpad like
+any other app. Override the location with `make install INSTALL_DIR=~/Applications`.
 
 The test suite uses a tiny custom harness (`Tests/KoeTests/`) instead of XCTest
 so it runs under Command Line Tools without full Xcode. See
