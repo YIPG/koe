@@ -13,6 +13,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     public override init() { super.init() }
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
+        MainMenu.install()  // enables ⌘C/⌘V/⌘A in the Preferences window
+
         let coordinator = DictationCoordinator(
             recorder: AudioRecorder(),
             transcriber: makeTranscriber(),
