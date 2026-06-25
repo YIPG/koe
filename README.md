@@ -1,85 +1,121 @@
 # koe（声）
 
-Minimal macOS menu-bar dictation app. Press a global hotkey, speak, press
-again — your speech is transcribed (Azure OpenAI `gpt-4o-transcribe`, high
-Japanese accuracy) and inserted at the cursor of whatever app is focused.
+> Minimal macOS menu-bar dictation. Press a hotkey, speak, press again — your
+> speech is transcribed and typed into whatever app is focused.
 
-Built in the spirit of [Maccy](https://maccy.app) / Magnet: single-purpose,
-minimal, hotkey-driven, out of your way.
+`koe` ("voice" in Japanese) is a tiny menu-bar agent for macOS. It does one
+thing: global push-to-talk dictation with **high-accuracy Japanese**
+transcription via Azure OpenAI `gpt-4o-transcribe`. No window to manage, no
+Dock icon — it stays out of your way until you call it, in the spirit of
+[Maccy](https://maccy.app) and Magnet.
+
+```mermaid
+flowchart LR
+    HK["Hotkey&nbsp;⌃⌥Space"] --> C{DictationCoordinator}
+    C -->|"start"| R["AudioRecorder<br/>(mic → WAV)"]
+    R -->|"hotkey again"| C
+    C -->|"transcribe"| T["Azure OpenAI<br/>gpt-4o-transcribe"]
+    T -->|"text"| I["TextInserter<br/>(clipboard + ⌘V)"]
+    I --> APP["Cursor in the<br/>frontmost app"]
+    C -. "state" .-> UI["Menu-bar icon<br/>+ HUD"]
+```
+
+## Features
+
+- 🎙 **System-wide** — works in any app (mail, Slack, editor, browser).
+- 🇯🇵 **High Japanese accuracy** — Azure OpenAI `gpt-4o-transcribe` (also handles English / other languages).
+- ⌨️ **One hotkey** — toggle to start, toggle to stop; text appears at your cursor.
+- 🪶 **Minimal** — a single menu-bar icon and a small recording indicator. No Dock icon.
+- 🔐 **Bring your own key** — your Azure key lives in your macOS Keychain. No key is bundled, no third party sees your audio.
+- 📋 **Clipboard-safe** — your existing clipboard contents are restored after insertion.
 
 ## Requirements
 
-- macOS 13+ (Apple Silicon)
-- Swift toolchain (Xcode **or** Command Line Tools — `xcode-select --install`)
-- An Azure OpenAI resource with a `gpt-4o-transcribe` deployment (BYO key)
+- macOS 13 (Ventura) or later, Apple Silicon
+- Swift toolchain — Xcode **or** Command Line Tools (`xcode-select --install`)
+- An Azure subscription with an Azure OpenAI `gpt-4o-transcribe` deployment (you bring your own — see below)
 
-## Build & run
-
-```bash
-make signing-cert  # once: create a stable self-signed signing identity
-make run           # build koe.app and launch it (menu-bar mic icon)
-make app           # just build koe.app
-make test          # run the logic test suite (swift run KoeTests)
-```
-
-Run `make signing-cert` once before your first build. It creates a local
-self-signed code-signing identity (`koe-dev`) so the app's signature stays
-constant across rebuilds — without it, ad-hoc signing changes the signature
-every build and macOS resets the Microphone/Accessibility permissions and
-re-prompts the Keychain each time.
-
-`koe` is a menu-bar agent (no Dock icon). It ships **no API key**; each user
-brings their own Azure key.
-
-## Azure setup (one-time)
-
-You need your **own** Azure subscription (a personal one — don't use a work
-subscription for a personal app).
+## Quick start
 
 ```bash
-az login                       # sign in to the subscription you want billed
-./scripts/setup-azure.sh       # creates RG + Azure OpenAI + gpt-4o-transcribe
-                               # deployment, writes endpoint/key to .koe.env
-source .koe.env && ./scripts/smoke-test.sh   # optional: verify the path
+git clone https://github.com/YIPG/koe.git
+cd koe
+
+make signing-cert    # once: stable self-signed identity (keeps permissions across rebuilds)
+./scripts/setup-azure.sh   # once: provision Azure + write .koe.env (see "Azure setup")
+make run             # build koe.app and launch it
 ```
 
-Then open **koe → Preferences…** and paste:
+Then open **koe → Preferences…** and paste the four values printed in
+`.koe.env` (Endpoint, Deployment, API Version, API Key), pick a language, and
+set a hotkey. On first use macOS will ask for **Microphone** and
+**Accessibility** permission — grant both (Accessibility is required to insert
+text into other apps).
 
-- **Endpoint** — `KOE_ENDPOINT`
-- **Deployment** — `gpt-4o-transcribe`
-- **API Version** — `2025-03-01-preview`
-- **API Key** — `KOE_API_KEY` (stored in your Keychain, never on disk in clear)
-- **Language** — `ja` (or `auto`)
-- **Hotkey** — default `⌃⌥Space`
+Usage: put your cursor in any text field → press `⌃⌥Space` → speak → press
+`⌃⌥Space` again. The transcription is inserted at the cursor.
 
-## Permissions
+## Azure setup
 
-On first use macOS will ask for:
+`koe` ships **no API key**; each user provides their own. Use your own personal
+Azure subscription.
 
-- **Microphone** — to record your voice.
-- **Accessibility** — to paste transcribed text into the focused app.
-  Grant `koe.app` in System Settings → Privacy & Security → Accessibility.
+```bash
+az login                       # sign in to the subscription to bill
+./scripts/setup-azure.sh       # creates a resource group + Azure OpenAI account
+                               # + gpt-4o-transcribe deployment, writes .koe.env
+source .koe.env && ./scripts/smoke-test.sh   # optional: verify the path end-to-end
+```
 
-## Usage
+`.koe.env` (git-ignored) holds your endpoint and key. Copy the values into
+koe's Preferences; the key is stored in your **Keychain**, never written to the
+app in cleartext.
 
-1. Put the cursor in any text field.
-2. Press the hotkey (`⌃⌥Space`). The menu-bar icon fills in and a small
-   "● 録音中…" HUD appears.
-3. Speak.
-4. Press the hotkey again. The text is transcribed and inserted at the cursor.
-   Your previous clipboard contents are preserved.
+Cost is roughly **$0.006 / minute** of audio (gpt-4o-transcribe) — comfortably
+within a typical free credit allowance for personal use.
+
+## Configuration
+
+| Setting | Default | Notes |
+|---|---|---|
+| Endpoint | — | `https://<resource>.openai.azure.com` |
+| Deployment | `gpt-4o-transcribe` | your Azure deployment name |
+| API Version | `2025-03-01-preview` | data-plane api-version |
+| API Key | — | stored in Keychain |
+| Language | `ja` | `ja` / `en` / `auto` |
+| Hotkey | `⌃⌥Space` | configurable |
 
 ## Architecture
 
-- `KoeKit` — library with all logic + AppKit classes (unit-tested).
-  - `TranscriptionService` is a protocol (`AzureOpenAITranscriptionService`
-    today) so the engine can be swapped (local whisper, Azure AI Speech, …).
-- `koe` — thin executable that boots the menu-bar agent.
-- Design + plan: `docs/superpowers/specs/` and `docs/superpowers/plans/`.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the component breakdown and data
+flow. In short: a `KoeKit` library holds all logic + AppKit classes (unit
+tested), and a thin `koe` executable boots the menu-bar agent. The transcription
+engine sits behind a `TranscriptionService` protocol, so it can be swapped
+(local Whisper, Azure AI Speech, …) without touching the rest of the app.
 
-## Notes
+## Development
 
-- The test suite uses a tiny custom harness (`Tests/KoeTests/`) instead of
-  XCTest, so it runs under Command Line Tools without full Xcode.
-- `KeyboardShortcuts` is pinned `1.10.0..<1.16.0` (1.16+ needs a SwiftUI macro
-  plugin that ships only with full Xcode).
+```bash
+make test      # run the logic test suite (swift run KoeTests)
+make app       # build koe.app
+make run       # build + launch
+```
+
+The test suite uses a tiny custom harness (`Tests/KoeTests/`) instead of XCTest
+so it runs under Command Line Tools without full Xcode. See
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Roadmap
+
+- [ ] Custom-vocabulary prompt to bias proper nouns
+- [ ] Launch at login + app icon
+- [ ] Local Whisper engine (offline)
+- [ ] Notarized `brew install --cask koe`
+- [ ] Transcription history / pre-insert preview
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+Built with [Azure OpenAI](https://azure.microsoft.com/products/ai-services/openai-service)
+and [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts).

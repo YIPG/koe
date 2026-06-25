@@ -36,8 +36,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         coordinator.onStateChange = { [weak self] state in
             self?.statusItem.render(state: state)
             switch state {
-            case .recording:    self?.indicator.show("● 録音中…")
-            case .transcribing: self?.indicator.show("変換中…")
+            case .recording:    self?.indicator.show("● Recording…")
+            case .transcribing: self?.indicator.show("Transcribing…")
             case .idle:         self?.indicator.hide()
             }
         }
